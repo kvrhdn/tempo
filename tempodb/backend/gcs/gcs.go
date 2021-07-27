@@ -173,6 +173,9 @@ func (rw *readerWriter) writer(ctx context.Context, name string) *storage.Writer
 }
 
 func (rw *readerWriter) readAll(ctx context.Context, name string) ([]byte, error) {
+	ctx, span := startOpenCensusSpan(ctx, "gcs.readAll")
+	defer span.End()
+
 	r, err := rw.hedgedBucket.Object(name).NewReader(ctx)
 	if err != nil {
 		return nil, err
@@ -183,6 +186,9 @@ func (rw *readerWriter) readAll(ctx context.Context, name string) ([]byte, error
 }
 
 func (rw *readerWriter) readAllWithModTime(ctx context.Context, name string) ([]byte, time.Time, error) {
+	ctx, span := startOpenCensusSpan(ctx, "gcs.readAllWithModTime")
+	defer span.End()
+
 	r, err := rw.hedgedBucket.Object(name).NewReader(ctx)
 	if err != nil {
 		return nil, time.Time{}, err
@@ -198,6 +204,9 @@ func (rw *readerWriter) readAllWithModTime(ctx context.Context, name string) ([]
 }
 
 func (rw *readerWriter) readRange(ctx context.Context, name string, offset int64, buffer []byte) error {
+	ctx, span := startOpenCensusSpan(ctx, "gcs.readRange")
+	defer span.End()
+
 	r, err := rw.hedgedBucket.Object(name).NewRangeReader(ctx, offset, int64(len(buffer)))
 	if err != nil {
 		return err

@@ -14,11 +14,13 @@ import (
 
 	"github.com/go-kit/kit/log/level"
 
+	opencensus_jaeger "contrib.go.opencensus.io/exporter/jaeger"
 	"github.com/drone/envsubst"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/version"
 	"github.com/weaveworks/common/logging"
 	"github.com/weaveworks/common/tracing"
+	opencensus_trace "go.opencensus.io/trace"
 
 	"github.com/cortexproject/cortex/pkg/util/flagext"
 	"github.com/cortexproject/cortex/pkg/util/log"
@@ -74,6 +76,22 @@ func main() {
 			os.Exit(1)
 		}
 	}()
+
+	// Set up an OpenCensus exporter for GCS
+	je, err := opencensus_jaeger.NewExporter(opencensus_jaeger.Options{
+		CollectorEndpoint: os.Getenv("JAEGER_ENDPOINT"),
+		//Process: opencensus_jaeger.Process{
+		//	ServiceName: os.Getenv("JAEGER_SERVICE_NAME"),
+		//},
+		OnError: func(err error) {
+			level.Error(log.Logger).Log("msg", "OpenCensus exporter OnError", "err", err)
+		},
+	})
+	if err != nil {
+		level.Error(log.Logger).Log("Failed to create the Jaeger exporter: %v", err)
+		os.Exit(1)
+	}
+	opencensus_trace.RegisterExporter(je)
 
 	if *mutexProfileFraction > 0 {
 		runtime.SetMutexProfileFraction(*mutexProfileFraction)
