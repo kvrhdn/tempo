@@ -157,6 +157,7 @@ func (t *App) initQuerier() (services.Service, error) {
 
 	middleware := middleware.Merge(
 		t.HTTPAuthMiddleware,
+		httpGzipMiddleware(),
 	)
 
 	tracesHandler := middleware.Wrap(http.HandlerFunc(t.querier.TraceByIDHandler))
@@ -192,9 +193,14 @@ func (t *App) initQueryFrontend() (services.Service, error) {
 	}
 
 	// wrap handlers with auth
-	traceByIDHandler := t.HTTPAuthMiddleware.Wrap(queryFrontend.TraceByID)
-	searchHandler := t.HTTPAuthMiddleware.Wrap(queryFrontend.Search)
-	backendSearchHandler := t.HTTPAuthMiddleware.Wrap(queryFrontend.BackendSearch)
+	middleware := middleware.Merge(
+		t.HTTPAuthMiddleware,
+		httpGzipMiddleware(),
+	)
+
+	traceByIDHandler := middleware.Wrap(queryFrontend.TraceByID)
+	searchHandler := middleware.Wrap(queryFrontend.Search)
+	backendSearchHandler := middleware.Wrap(queryFrontend.BackendSearch)
 
 	// register grpc server for queriers to connect to
 	cortex_frontend_v1pb.RegisterFrontendServer(t.Server.GRPC, t.frontend)
