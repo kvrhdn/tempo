@@ -42,6 +42,7 @@ import (
 	"github.com/grafana/tempo/modules/storage"
 	"github.com/grafana/tempo/pkg/util"
 	"github.com/grafana/tempo/pkg/util/log"
+	"github.com/grafana/tempo/pkg/util/pproflabels"
 	"github.com/grafana/tempo/tempodb"
 )
 
@@ -57,6 +58,9 @@ type Config struct {
 	MetricsGeneratorEnabled bool   `yaml:"metrics_generator_enabled"`
 	HTTPAPIPrefix           string `yaml:"http_api_prefix"`
 	UseOTelTracer           bool   `yaml:"use_otel_tracer,omitempty"`
+
+	// Experimental
+	InjectPprofLabels bool `yaml:"inject_pprof_labels,omitempty"`
 
 	Server          server.Config           `yaml:"server,omitempty"`
 	Distributor     distributor.Config      `yaml:"distributor,omitempty"`
@@ -202,6 +206,10 @@ func New(cfg Config) (*App, error) {
 
 	app.setupAuthMiddleware()
 
+	if app.cfg.InjectPprofLabels {
+		app.setupPprofLabelsMiddleware()
+	}
+
 	if err := app.setupModuleManager(); err != nil {
 		return nil, fmt.Errorf("failed to setup module manager %w", err)
 	}
@@ -250,6 +258,12 @@ func (t *App) setupAuthMiddleware() {
 		t.HTTPAuthMiddleware = fakeHTTPAuthMiddleware
 		t.TracesConsumerMiddleware = receiver.FakeTenantMiddleware()
 	}
+}
+
+func (t *App) setupPprofLabelsMiddleware() {
+	t.cfg.Server.HTTPMiddleware = append(t.cfg.Server.HTTPMiddleware, pproflabels.HTTPMiddleware())
+	t.cfg.Server.GRPCMiddleware = append(t.cfg.Server.GRPCMiddleware, pproflabels.GRPCMiddleware())
+	t.cfg.Server.GRPCStreamMiddleware = append(t.cfg.Server.GRPCStreamMiddleware, pproflabels.GRPCStreamMiddleware())
 }
 
 // Run starts, and blocks until a signal is received.
