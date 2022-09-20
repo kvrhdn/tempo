@@ -27,6 +27,10 @@ type FetchSpansRequest struct {
 	AllConditions bool
 }
 
+func (f *FetchSpansRequest) appendCondition(c ...Condition) {
+	f.Conditions = append(f.Conditions, c...)
+}
+
 type Span struct {
 	ID                 []byte
 	StartTimeUnixNanos uint64

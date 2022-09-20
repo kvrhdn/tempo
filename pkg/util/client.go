@@ -10,8 +10,9 @@ import (
 	"github.com/golang/protobuf/jsonpb" //nolint:all
 	"github.com/golang/protobuf/proto"  //nolint:all
 
-	"github.com/grafana/tempo/pkg/tempopb"
 	"github.com/klauspost/compress/gzhttp"
+
+	"github.com/grafana/tempo/pkg/tempopb"
 )
 
 const (
@@ -106,6 +107,17 @@ func (c *Client) SearchTagValues(key string) (*tempopb.SearchTagValuesResponse, 
 func (c *Client) Search(tags string) (*tempopb.SearchResponse, error) {
 	m := &tempopb.SearchResponse{}
 	_, err := c.getFor(c.BaseURL+"/api/search?tags="+url.QueryEscape(tags), m)
+	if err != nil {
+		return nil, err
+	}
+
+	return m, nil
+}
+
+// SearchTraceQL Tempo
+func (c *Client) SearchTraceQL(query string) (*tempopb.SearchResponse, error) {
+	m := &tempopb.SearchResponse{}
+	_, err := c.getFor(c.BaseURL+"/api/search?q="+url.QueryEscape(query), m)
 	if err != nil {
 		return nil, err
 	}

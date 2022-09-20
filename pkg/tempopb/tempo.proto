@@ -3,6 +3,7 @@ syntax="proto3";
 package tempopb;
 
 import "trace/v1/trace.proto";
+import "common/v1/common.proto";
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 
 service Pusher {
@@ -80,6 +81,14 @@ message TraceSearchMetadata {
   string rootTraceName = 3;
   uint64 startTimeUnixNano = 4;
   uint32 durationMs = 5;
+  repeated Span spans = 6;
+}
+
+message Span {
+  bytes span_id = 1;
+  uint64 startTimeUnixNano = 2;
+  uint64 endTimeUnixNano = 3;
+  repeated tempopb.common.v1.KeyValue attributes = 4;
 }
 
 message SearchMetrics {

@@ -1,24 +1,19 @@
 target: all
+search_enabled: true
 
 server:
   http_listen_port: 3200
 
 query_frontend:
   search:
-    query_backend_after: 0 # setting these both to 0 will force all range searches to hit the backend
-    query_ingesters_until: 0
+    query_backend_after: 1s # setting these both to 0 will force all range searches to hit the backend
+    query_ingesters_until: 1s
 
 distributor:
   receivers:
     jaeger:
       protocols:
         grpc:
-    otlp:
-      protocols:
-        grpc:
-    zipkin:
-  log_received_spans:
-    enabled: true
 
 ingester:
   lifecycler:
@@ -39,9 +34,12 @@ storage:
     backend: local
     local:
       path: /var/tempo
+    blocklist_poll: 5s
     pool:
       max_workers: 10
       queue_depth: 100
+    block:
+      version: vParquet
 
 overrides:
   max_search_bytes_per_trace: 50_000
